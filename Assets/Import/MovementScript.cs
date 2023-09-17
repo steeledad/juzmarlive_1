@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class RandomCharacterMovement : MonoBehaviour
 {
-    public float moveSpeed = 5.0f;
+    public float moveSpeed = 4.0f;
     public float rotationSpeed = 45.0f; // Speed of rotation in degrees per second
     public float moveDuration = 1.0f;    // Duration of movement in seconds
     public float waitDuration = 1.0f;    // Duration of waiting in seconds
