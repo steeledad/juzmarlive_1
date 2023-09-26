@@ -8,12 +8,22 @@ using SimpleJSON;
 public class DownloadAndPlayAudio : MonoBehaviour
 {
     public AudioSource audioSource;
-    private string fetchJobUrl = "http://34.227.81.173:3000/fetch_job";
-    private string filePath;
+    public bool harmlessFetchJob = false;
+    public string filePath = "file:///C:/Users/steel/Downloads/test.mp3";
+
+    private string fetchJobUrl;
 
     void Start()
     {
-        filePath = "file:///C:/Users/steel/Downloads/test.mp3";
+        if (harmlessFetchJob)
+        {
+            fetchJobUrl = "http://34.227.81.173:3000/harmless_fetch_job";
+        }
+        else
+        {
+            fetchJobUrl = "http://34.227.81.173:3000/fetch_job";
+        }
+
         StartCoroutine(RunCoroutinesSequentially());
     }
 
@@ -62,11 +72,14 @@ public class DownloadAndPlayAudio : MonoBehaviour
             }
             else
             {
-                string localPath = Path.Combine("C:/Users/steel/Downloads", "test.mp3");
+                string localPath = filePath.Substring(8);
+                Debug.Log("localPath: " + localPath);
+
                 File.WriteAllBytes(localPath, www.downloadHandler.data);
                 Debug.Log("Audio saved at: " + localPath);
 
                 string audioFilePath = "file://" + localPath.Replace('\\', '/');
+                Debug.Log("audioFilePath: " + audioFilePath);
                 yield return StartCoroutine(LoadAndPlayAudio(audioFilePath));
             }
         }
