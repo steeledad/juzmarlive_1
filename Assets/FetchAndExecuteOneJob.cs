@@ -4,12 +4,17 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.Networking;
 using SimpleJSON;
+using TMPro;
 
 
 public class DownloadAndPlayAudio : MonoBehaviour
 {
     public AudioSource audioSource;
     public string CurrentCharacter { get; private set; }
+
+    // public TextMeshProUGUI captions;
+    public TextMeshPro captions;
+
 
     public bool harmlessFetchJob = false;
     public string filePath = "file:///C:/Users/steel/Downloads/test.mp3";
@@ -118,7 +123,7 @@ public class DownloadAndPlayAudio : MonoBehaviour
             for (int i = 2; i < conversationCount; i += 2)
             {
                 string downloadAudioUrl = $"http://34.227.81.173:3000/fetch_audio?job_id={jobId}&index={i}";
-                yield return StartCoroutine(DownloadAndPlayAudioClip(downloadAudioUrl));
+                yield return StartCoroutine(DownloadAndPlayAudioClip(downloadAudioUrl, transcripts[(i / 2 - 1)]));
                 Debug.Log("characters length: " + characters.Length);
                 // Debug.log(characters[i / 2])
                 Debug.Log("characters[" + (i / 2 - 1) + "]: " + characters[(i / 2 - 1)]);
@@ -133,7 +138,7 @@ public class DownloadAndPlayAudio : MonoBehaviour
         }
     }
 
-    IEnumerator DownloadAndPlayAudioClip(string url)
+    IEnumerator DownloadAndPlayAudioClip(string url, string transcript)
     {
         using (UnityWebRequest www = UnityWebRequest.Get(url))
         {
@@ -155,18 +160,29 @@ public class DownloadAndPlayAudio : MonoBehaviour
 
                 string audioFilePath = "file://" + localPath.Replace('\\', '/');
                 Debug.Log("audioFilePath: " + audioFilePath);
-                yield return StartCoroutine(LoadAndPlayAudio(audioFilePath));
+                // yield return StartCoroutine(LoadAndPlayAudio(audioFilePath));
+                yield return StartCoroutine(LoadAndPlayAudio(audioFilePath, transcript));
             }
         }
     }
 
 
-    IEnumerator LoadAndPlayAudio(string path)
+    // IEnumerator LoadAndPlayAudio(string path)
+    // {
+    //     using (WWW www = new WWW(path))
+    //     {
+    //         yield return www;
+    //         audioSource.clip = www.GetAudioClip(false, true, AudioType.MPEG);
+    //         audioSource.Play();
+    //     }
+    // }
+    IEnumerator LoadAndPlayAudio(string path, string transcript)
     {
         using (WWW www = new WWW(path))
         {
             yield return www;
             audioSource.clip = www.GetAudioClip(false, true, AudioType.MPEG);
+            captions.text = transcript;
             audioSource.Play();
         }
     }
