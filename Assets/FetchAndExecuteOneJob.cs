@@ -5,16 +5,23 @@ using UnityEngine;
 using UnityEngine.Networking;
 using SimpleJSON;
 
+
 public class DownloadAndPlayAudio : MonoBehaviour
 {
     public AudioSource audioSource;
+    public string CurrentCharacter { get; private set; }
+
     public bool harmlessFetchJob = false;
     public string filePath = "file:///C:/Users/steel/Downloads/test.mp3";
+    public Dictionary<string, GameObject> characterMap = new Dictionary<string, GameObject>();
+    public Camera mainCamera;
+    public Vector3 defaultRotation;
 
     private string fetchJobUrl;
 
     void Start()
     {
+        InitializeCharacterMap();
         if (harmlessFetchJob)
         {
             fetchJobUrl = "http://34.227.81.173:3000/harmless_fetch_job";
@@ -27,9 +34,30 @@ public class DownloadAndPlayAudio : MonoBehaviour
         StartCoroutine(RunCoroutinesSequentially());
     }
 
+    void Update()
+    {
+        if (!audioSource.isPlaying && captions.text != "")
+        {
+            captions.text = "";
+        }
+    }
+
+    private void InitializeCharacterMap()
+    {
+        // Add your character GameObject references here, use names like "spongebob" as keys
+        characterMap.Add("spongebob", GameObject.Find("SpongeBob"));
+        characterMap.Add("patrick", GameObject.Find("patrick"));
+        characterMap.Add("joe", GameObject.Find("rogan"));
+        characterMap.Add("andrew", GameObject.Find("tate"));
+        // Add more characters if needed...
+    }
     IEnumerator RunCoroutinesSequentially()
     {
         string jobId = null;
+        string[] conversations = new string[100];
+        string[] characters = new string[100];
+        string[] transcripts = new string[100];
+
         int conversationCount = 0;
 
         using (UnityWebRequest jobRequest = UnityWebRequest.Get(fetchJobUrl))
@@ -38,7 +66,8 @@ public class DownloadAndPlayAudio : MonoBehaviour
 
             if (jobRequest.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogError(jobRequest.error);
+                // Debug.LogError(jobRequest.error);
+                Debug.LogError("Job Request Error" + jobRequest.error);
             }
             else
             {
@@ -46,6 +75,41 @@ public class DownloadAndPlayAudio : MonoBehaviour
                 JSONNode jsonNode = JSON.Parse(response);
                 jobId = jsonNode["job_id"];
                 conversationCount = jsonNode["conversation"].Count;
+                for (int i = 0; i < conversationCount; i++)
+                {
+                    conversations[i] = jsonNode["conversation"][i]["content"];
+                }
+                int count = 0;
+                Debug.Log("conversationCount: " + conversationCount);
+                for (int i = 2; i < conversationCount; i += 2)
+                {
+                    Debug.Log("conversations[" + i + "]: " + conversations[i]);
+                    bool conversation_formatting_correct = conversations[i].Contains(" to ");
+                    Debug.Log("conversation_formatting_correct: " + conversation_formatting_correct);
+                    if (conversation_formatting_correct)
+                    {
+                        characters[count] = conversations[i].Split(' ')[0].Substring(1);
+                        if (conversations[i].Contains("]"))
+                        {
+                            transcripts[count] = conversations[i].Split(']')[1];
+                        }
+                        else
+                        {
+                            transcripts[count] = "BAD TEXT TRANSCRIPT";
+                        }
+                    }
+                    else
+                    {
+                        characters[count] = "unknown";
+                        transcripts[count] = conversations[i];
+                    }
+                    count++;
+                }
+                for (int i = 0; i < count; i++)
+                {
+                    Debug.Log("characters[" + i + "]: " + characters[i]);
+                    Debug.Log("transcripts[" + i + "]: " + transcripts[i]);
+                }
             }
         }
 
@@ -55,6 +119,15 @@ public class DownloadAndPlayAudio : MonoBehaviour
             {
                 string downloadAudioUrl = $"http://34.227.81.173:3000/fetch_audio?job_id={jobId}&index={i}";
                 yield return StartCoroutine(DownloadAndPlayAudioClip(downloadAudioUrl));
+                Debug.Log("characters length: " + characters.Length);
+                // Debug.log(characters[i / 2])
+                Debug.Log("characters[" + (i / 2 - 1) + "]: " + characters[(i / 2 - 1)]);
+
+                CurrentCharacter = characters[(i / 2 - 1)];
+                // Debug.Log(CurrentCharacter);
+                Debug.Log("CurrentCharacter: " + CurrentCharacter);
+
+
                 yield return new WaitForSeconds(audioSource.clip.length + 0.5f);
             }
         }
@@ -64,11 +137,13 @@ public class DownloadAndPlayAudio : MonoBehaviour
     {
         using (UnityWebRequest www = UnityWebRequest.Get(url))
         {
+            Debug.Log("url: " + url);
             yield return www.SendWebRequest();
 
             if (www.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogError(www.error);
+                // Debug.LogError(www.error);
+                Debug.LogError("Audio Request Error" + www.error);
             }
             else
             {
@@ -85,6 +160,7 @@ public class DownloadAndPlayAudio : MonoBehaviour
         }
     }
 
+
     IEnumerator LoadAndPlayAudio(string path)
     {
         using (WWW www = new WWW(path))
@@ -94,4 +170,5 @@ public class DownloadAndPlayAudio : MonoBehaviour
             audioSource.Play();
         }
     }
+
 }
