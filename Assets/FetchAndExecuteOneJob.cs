@@ -50,10 +50,10 @@ public class DownloadAndPlayAudio : MonoBehaviour
     private void InitializeCharacterMap()
     {
         // Add your character GameObject references here, use names like "spongebob" as keys
-        characterMap.Add("spongebob", GameObject.Find("SpongeBob"));
+        characterMap.Add("spongebob", GameObject.Find("spongebob"));
         characterMap.Add("patrick", GameObject.Find("patrick"));
-        characterMap.Add("joe", GameObject.Find("rogan"));
-        characterMap.Add("andrew", GameObject.Find("tate"));
+        characterMap.Add("joe", GameObject.Find("joe"));
+        characterMap.Add("andrew", GameObject.Find("andrew"));
         // Add more characters if needed...
     }
     IEnumerator RunCoroutinesSequentially()
